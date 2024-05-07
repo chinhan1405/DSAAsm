@@ -12,6 +12,7 @@ struct kDTreeNode
         this->left = left;
         this->right = right;
     }
+
     kDTreeNode(const kDTreeNode &other)
     {
         data = other.data;
@@ -24,12 +25,27 @@ struct kDTreeNode
         else
             right = nullptr;
     }
+
     ~kDTreeNode()
     {
         delete left;
         delete right;
     }
-    string format() const;
+
+    friend ostream &operator<<(ostream &os, const kDTreeNode &node)
+    {
+        os << "(";
+        for (int i = 0; i < node.data.size(); i++)
+        {
+            os << node.data[i];
+            if (i != node.data.size() - 1)
+            {
+                os << ", ";
+            }
+        }
+        os << ")";
+        return os;
+    }
 };
 
 class kDTree
@@ -48,10 +64,10 @@ private:
     kDTreeNode *findMin(kDTreeNode *root, int depth, int dim);
     void remove(kDTreeNode *&root, const vector<int> &point, int depth);
     bool search(kDTreeNode *root, const vector<int> &point, int depth);
-    int mergeSort(vector<vector<int>> &pointList, int left, int right, int depth, bool isLeft);
-    void buildTree(kDTreeNode *&root, vector<vector<int>> &pointList, int left, int right, int depth, bool isLeft);
+    int mergeSort(vector<vector<int>> &pointList, int left, int right, int depth);
+    void buildTree(kDTreeNode *&root, vector<vector<int>> &pointList, int left, int right, int depth);
     double distance_squared(const vector<int> &a, const vector<int> &b);
-    void nearestNeighbour(kDTreeNode *root, const vector<int> &target, kDTreeNode *best, int depth);
+    void nearestNeighbour(kDTreeNode *root, const vector<int> &target, kDTreeNode *&best, int depth);
     void kNearestNeighbour(kDTreeNode *root, const vector<int> &target, int k, vector<kDTreeNode *> &bestList, int depth);
 
 public:
@@ -72,7 +88,7 @@ public:
     void remove(const vector<int> &point);
     bool search(const vector<int> &point);
     void buildTree(const vector<vector<int>> &pointList);
-    void nearestNeighbour(const vector<int> &target, kDTreeNode *best);
+    void nearestNeighbour(const vector<int> &target, kDTreeNode *&best);
     void addNearNeighbour(kDTreeNode *best, const vector<int> &target, vector<kDTreeNode *> &bestList, int k);
     void kNearestNeighbour(const vector<int> &target, int k, vector<kDTreeNode *> &bestList);
 };

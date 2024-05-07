@@ -1,17 +1,6 @@
 #include "kDTree.hpp"
 
 // kDTree
-string kDTreeNode::format() const {
-    if (data.empty()) return "";
-    stringstream ss;
-    ss << "(" << data[0];
-    for (int i = 1; i < data.size(); i++) {
-        ss << "," << data[i];
-    }
-    ss << ")";
-    return ss.str();
-}
-
 kDTree::kDTree(int k) {
     this->k = k;
     this->root = nullptr;
@@ -46,27 +35,31 @@ void kDTree::inorderTraversal(kDTreeNode *root) const {
         return;
     }
     inorderTraversal(root->left);
-    cout << root->format() << " ";
+    cout << *root;
+    if (root->right) cout << " ";
     inorderTraversal(root->right);
 }
 
 void kDTree::inorderTraversal() const {
     inorderTraversal(root);
-    cout << "\b";
 }
 
 void kDTree::preorderTraversal(kDTreeNode *root) const {
     if (root == nullptr) {
         return;
     }
-    cout << root->format() << " ";
+    cout << " " << *root;
     preorderTraversal(root->left);
     preorderTraversal(root->right);
 }
 
 void kDTree::preorderTraversal() const {
-    preorderTraversal(root);
-    cout << "\b";
+    if (root == nullptr) {
+        return;
+    }
+    cout << *root;
+    preorderTraversal(root->left);
+    preorderTraversal(root->right);
 }
 
 void kDTree::postorderTraversal(kDTreeNode *root) const {
@@ -75,12 +68,16 @@ void kDTree::postorderTraversal(kDTreeNode *root) const {
     }
     postorderTraversal(root->left);
     postorderTraversal(root->right);
-    cout << root->format() << " ";
+    cout << *root << " ";
 }
 
 void kDTree::postorderTraversal() const {
-    postorderTraversal(root);
-    cout << "\b";
+    if (root == nullptr) {
+        return;
+    }
+    postorderTraversal(root->left);
+    postorderTraversal(root->right);
+    cout << *root;
 }
 
 int kDTree::height(kDTreeNode *root) const {
@@ -206,19 +203,13 @@ bool kDTree::search(const vector<int> &point) {
     return search(root, point, 0);
 }
 
-int kDTree::mergeSort(vector<vector<int>> &pointList, int left, int right, int depth, bool isLeft) {
+int kDTree::mergeSort(vector<vector<int>> &pointList, int left, int right, int depth) {
     depth %= k;
     if (left >= right) return 0;
     int mid = 0;
-    if (isLeft) {
-        mid = left + (right - left) / 2;
-        mergeSort(pointList, left, mid, depth, isLeft);
-        mergeSort(pointList, mid + 1, right, depth, isLeft);
-    } else {
-        mid = left + ceil((right - left) / 2.0);
-        mergeSort(pointList, left, mid - 1, depth, isLeft);
-        mergeSort(pointList, mid, right, depth, isLeft);
-    }
+    mid = (left + right) / 2;
+    mergeSort(pointList, left, mid, depth);
+    mergeSort(pointList, mid + 1, right, depth);
     vector<vector<int>> temp(right - left + 1);
     int i = left, j = mid + 1, k = 0;
     while (i <= mid && j <= right) {
@@ -240,21 +231,21 @@ int kDTree::mergeSort(vector<vector<int>> &pointList, int left, int right, int d
     return mid;
 }
 
-void kDTree::buildTree(kDTreeNode *&root, vector<vector<int>> &pointList, int left, int right, int depth, bool isLeft) {
+void kDTree::buildTree(kDTreeNode *&root, vector<vector<int>> &pointList, int left, int right, int depth) {
     if (left > right) return;
     else if (left == right) {
         root = new kDTreeNode(pointList[left]);
         return;
     }
-    int mid = mergeSort(pointList, left, right, depth, isLeft);
+    int mid = mergeSort(pointList, left, right, depth);
     root = new kDTreeNode(pointList[mid]);
-    buildTree(root->left, pointList, left, mid - 1, depth + 1, true);
-    buildTree(root->right, pointList, mid + 1, right, depth + 1, false);
+    buildTree(root->left, pointList, left, mid - 1, depth + 1);
+    buildTree(root->right, pointList, mid + 1, right, depth + 1);
 }
 
 void kDTree::buildTree(const vector<vector<int>> &pointList) {
     vector<vector<int>> tempList = pointList;
-    buildTree(root, tempList, 0, tempList.size() - 1, 0, true);
+    buildTree(root, tempList, 0, tempList.size() - 1, 0);
 }
 
 double kDTree::distance_squared(const vector<int> &a, const vector<int> &b) {
@@ -265,35 +256,35 @@ double kDTree::distance_squared(const vector<int> &a, const vector<int> &b) {
     return sum;
 }
 
-void kDTree::nearestNeighbour(kDTreeNode *root, const vector<int> &target, kDTreeNode *best, int depth) {
+void kDTree::nearestNeighbour(kDTreeNode *root, const vector<int> &target, kDTreeNode *&best, int depth) {
     if (root == nullptr) return;
     if (root->data == target) {
-        best->data = target;
+        best = root;
         return;
     }
     if (target[depth%k] < root->data[depth%k] && root->left) {
         nearestNeighbour(root->left, target, best, depth + 1);
         if (distance_squared(root->data, target) < distance_squared(best->data, target)) {
-            best->data = root->data;
+            best = root;
         }
         if (root->right && distance_squared(best->data, target) > pow(target[depth%k] - root->data[depth%k], 2))
             nearestNeighbour(root->right, target, best, depth + 1);
     } else if (target[depth%k] >= root->data[depth%k] && root->right) {
         nearestNeighbour(root->right, target, best, depth + 1);
         if (distance_squared(root->data, target) < distance_squared(best->data, target)) {
-            best->data = root->data;
+            best = root;
         }
         if (root->left && distance_squared(best->data, target) > pow(target[depth%k] - root->data[depth%k], 2))
             nearestNeighbour(root->left, target, best, depth + 1);
     }
     else {
-        if (best->data == vector<int>(k, 0) || distance_squared(root->data, target) < distance_squared(best->data, target))
-            best->data = root->data;
+        if (!best || distance_squared(root->data, target) < distance_squared(best->data, target))
+            best = root;
         return;
     }
 }
 
-void kDTree::nearestNeighbour(const vector<int> &target, kDTreeNode *best) {
+void kDTree::nearestNeighbour(const vector<int> &target, kDTreeNode *&best) {
     nearestNeighbour(root, target, best, 0);
 }
 
