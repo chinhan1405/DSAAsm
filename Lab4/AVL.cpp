@@ -68,13 +68,13 @@ public:
             q.pop();
             if (temp == NULL)
             {
-                cout << "  ";
+                cout << " ";
                 q.push(NULL);
                 q.push(NULL);
             }
             else
             {
-                cout << temp->data << temp->balance;
+                cout << temp->data;
                 q.push(temp->pLeft);
                 q.push(temp->pRight);
             }
@@ -243,3 +243,5 @@ int main()
 }
 
 // 6 3 9 12 10 8 6 8 9 10 9 9 12 10 15 11 12 8 9
+
+// 5 8 3 9 12 4 13 1 5 17 7 2 20
